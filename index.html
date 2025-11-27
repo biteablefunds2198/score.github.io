@@ -52,15 +52,22 @@
         box-shadow: 0 0 10px rgba(0,0,0,0.6);
     }
 
-    .team h2 {
+    .team-name {
         margin: 0 0 5px 0;
         color: #f8d54b;
         text-shadow: 1px 1px black;
+        font-size: 26px;
+        cursor: pointer;
     }
 
-    .toggle-area {
-        margin-bottom: 10px;
-        font-size: 14px;
+    .team-name-input {
+        width: 90%;
+        font-size: 22px;
+        padding: 4px;
+        border-radius: 6px;
+        border: none;
+        text-align: center;
+        margin-bottom: 6px;
     }
 
     .score {
@@ -70,8 +77,13 @@
 
     .buttons {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .buttons.minus-row {
+        margin-top: 6px;
     }
 
     button {
@@ -88,6 +100,24 @@
     button:hover {
         background: #ffe680;
     }
+
+    .custom-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 12px;
+    }
+
+    .custom-container input {
+        width: 80px;
+        padding: 6px;
+        border-radius: 6px;
+        border: none;
+        font-size: 16px;
+        text-align: center;
+    }
+
 </style>
 </head>
 <body>
@@ -99,15 +129,12 @@
 <div class="team-container" id="teamContainer"></div>
 
 <script>
-    const NUM_TEAMS = 5;
+    const NUM_TEAMS = 6;
 
-    // Normal Jeopardy point values
     const normalValues = [200, 400, 600, 800, 1000];
-
-    // Double Jeopardy point values
     const doubleValues = [400, 800, 1200, 1600, 2000];
 
-    let doubleMode = false; // start in normal mode
+    let doubleMode = false;
     let pointValues = [...normalValues];
 
     function updateScore(id, amount) {
@@ -121,56 +148,105 @@
         for (let i = 1; i <= NUM_TEAMS; i++) {
             const teamDiv = document.createElement("div");
             teamDiv.className = "team";
-            teamDiv.id = "teamBox" + i;
 
             teamDiv.innerHTML = `
-                <h2>Team ${i}</h2>
-                <div class="toggle-area">
-                    <label>
-                        <input type="checkbox" id="toggle${i}" checked>
-                        Show Team
-                    </label>
-                </div>
+                <div class="team-name" id="teamName${i}">Team ${i}</div>
                 <div class="score" id="score${i}">0</div>
-                <div class="buttons" id="buttons${i}"></div>
+
+                <div class="buttons" id="plusRow${i}"></div>
+                <div class="buttons minus-row" id="minusRow${i}"></div>
+
+                <div class="custom-container">
+                    <button id="customMinus${i}">−</button>
+                    <input type="number" id="customInput${i}" placeholder="Value">
+                    <button id="customPlus${i}">+</button>
+                </div>
             `;
 
             container.appendChild(teamDiv);
 
-            // Toggle handler
-            document.getElementById("toggle" + i).addEventListener("change", (e) => {
-                teamDiv.style.display = e.target.checked ? "block" : "none";
-            });
-
             buildButtons(i);
+            setupTeamNameEditing(i);
+            setupCustom(i);
         }
     }
 
     function buildButtons(teamNumber) {
-        const btnContainer = document.getElementById("buttons" + teamNumber);
-        btnContainer.innerHTML = "";
+        const plusRow = document.getElementById("plusRow" + teamNumber);
+        const minusRow = document.getElementById("minusRow" + teamNumber);
+
+        plusRow.innerHTML = "";
+        minusRow.innerHTML = "";
 
         pointValues.forEach(value => {
             const plus = document.createElement("button");
             plus.textContent = `+${value}`;
             plus.onclick = () => updateScore(`score${teamNumber}`, value);
-            btnContainer.appendChild(plus);
+            plusRow.appendChild(plus);
         });
 
         pointValues.forEach(value => {
             const minus = document.createElement("button");
             minus.textContent = `-${value}`;
             minus.onclick = () => updateScore(`score${teamNumber}`, -value);
-            btnContainer.appendChild(minus);
+            minusRow.appendChild(minus);
         });
     }
 
-    // Switch between normal and double jeopardy
+    function setupCustom(teamNumber) {
+        const input = document.getElementById("customInput" + teamNumber);
+        const btnPlus = document.getElementById("customPlus" + teamNumber);
+        const btnMinus = document.getElementById("customMinus" + teamNumber);
+
+        btnPlus.onclick = () => {
+            const val = parseInt(input.value);
+            if (!isNaN(val)) updateScore(`score${teamNumber}`, val);
+        };
+
+        btnMinus.onclick = () => {
+            const val = parseInt(input.value);
+            if (!isNaN(val)) updateScore(`score${teamNumber}`, -val);
+        };
+    }
+
+    // Editable Team Names
+    function setupTeamNameEditing(teamNumber) {
+        const nameEl = document.getElementById("teamName" + teamNumber);
+
+        nameEl.addEventListener("click", () => {
+            const currentName = nameEl.textContent;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = currentName;
+            input.className = "team-name-input";
+
+            nameEl.replaceWith(input);
+            input.focus();
+            input.select();
+
+            function saveName() {
+                const newName = input.value.trim() || currentName;
+                const newLabel = document.createElement("div");
+                newLabel.className = "team-name";
+                newLabel.id = "teamName" + teamNumber;
+                newLabel.textContent = newName;
+
+                input.replaceWith(newLabel);
+                setupTeamNameEditing(teamNumber); // reattach listener
+            }
+
+            input.addEventListener("blur", saveName);
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") saveName();
+            });
+        });
+    }
+
+    // Mode switching
     document.getElementById("modeBtn").onclick = () => {
         doubleMode = !doubleMode;
         pointValues = doubleMode ? doubleValues : normalValues;
 
-        // Rebuild all button sets
         for (let i = 1; i <= NUM_TEAMS; i++) {
             buildButtons(i);
         }
