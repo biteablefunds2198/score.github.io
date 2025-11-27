@@ -36,11 +36,15 @@
         background: #ffe680;
     }
 
+    /* NEW: 3 teams per row */
     .team-container {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: 25px;
+        justify-items: center;
+        width: 100%;
+        max-width: 1400px;
+        margin: auto;
     }
 
     .team {
@@ -48,8 +52,9 @@
         border: 3px solid #f8d54b;
         border-radius: 12px;
         padding: 20px;
-        width: 260px;
+        width: 320px; /* WIDER to contain buttons */
         box-shadow: 0 0 10px rgba(0,0,0,0.6);
+        overflow: hidden; /* ensures nothing spills out */
     }
 
     .team-name {
@@ -82,19 +87,16 @@
         margin-bottom: 10px;
     }
 
-    .buttons.minus-row {
-        margin-top: 6px;
-    }
-
     button {
-        padding: 10px;
+        padding: 8px; /* slightly reduced so they fit */
         border: none;
         border-radius: 8px;
         background: #f8d54b;
         color: #000;
-        font-size: 16px;
+        font-size: 15px;
         cursor: pointer;
         font-weight: bold;
+        white-space: nowrap;
     }
 
     button:hover {
@@ -117,7 +119,6 @@
         font-size: 16px;
         text-align: center;
     }
-
 </style>
 </head>
 <body>
@@ -154,7 +155,7 @@
                 <div class="score" id="score${i}">0</div>
 
                 <div class="buttons" id="plusRow${i}"></div>
-                <div class="buttons minus-row" id="minusRow${i}"></div>
+                <div class="buttons" id="minusRow${i}"></div>
 
                 <div class="custom-container">
                     <button id="customMinus${i}">−</button>
@@ -196,67 +197,3 @@
     function setupCustom(teamNumber) {
         const input = document.getElementById("customInput" + teamNumber);
         const btnPlus = document.getElementById("customPlus" + teamNumber);
-        const btnMinus = document.getElementById("customMinus" + teamNumber);
-
-        btnPlus.onclick = () => {
-            const val = parseInt(input.value);
-            if (!isNaN(val)) updateScore(`score${teamNumber}`, val);
-        };
-
-        btnMinus.onclick = () => {
-            const val = parseInt(input.value);
-            if (!isNaN(val)) updateScore(`score${teamNumber}`, -val);
-        };
-    }
-
-    // Editable Team Names
-    function setupTeamNameEditing(teamNumber) {
-        const nameEl = document.getElementById("teamName" + teamNumber);
-
-        nameEl.addEventListener("click", () => {
-            const currentName = nameEl.textContent;
-            const input = document.createElement("input");
-            input.type = "text";
-            input.value = currentName;
-            input.className = "team-name-input";
-
-            nameEl.replaceWith(input);
-            input.focus();
-            input.select();
-
-            function saveName() {
-                const newName = input.value.trim() || currentName;
-                const newLabel = document.createElement("div");
-                newLabel.className = "team-name";
-                newLabel.id = "teamName" + teamNumber;
-                newLabel.textContent = newName;
-
-                input.replaceWith(newLabel);
-                setupTeamNameEditing(teamNumber); // reattach listener
-            }
-
-            input.addEventListener("blur", saveName);
-            input.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") saveName();
-            });
-        });
-    }
-
-    // Mode switching
-    document.getElementById("modeBtn").onclick = () => {
-        doubleMode = !doubleMode;
-        pointValues = doubleMode ? doubleValues : normalValues;
-
-        for (let i = 1; i <= NUM_TEAMS; i++) {
-            buildButtons(i);
-        }
-
-        document.getElementById("modeBtn").textContent =
-            doubleMode ? "Switch to Normal Jeopardy" : "Switch to Double Jeopardy";
-    };
-
-    createTeams();
-</script>
-
-</body>
-</html>
