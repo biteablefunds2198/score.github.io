@@ -194,6 +194,57 @@
         });
     }
 
-    function setupCustom(teamNumber) {
-        const input = document.getElementById("customInput" + teamNumber);
-        const btnPlus = document.getElementById("customPlus" + teamNumber);
+function setupCustom(teamNumber) {
+    const input = document.getElementById("customInput" + teamNumber);
+    const btnPlus = document.getElementById("customPlus" + teamNumber);
+    const btnMinus = document.getElementById("customMinus" + teamNumber);
+
+    btnPlus.onclick = () => {
+        const val = parseInt(input.value);
+        if (!isNaN(val)) updateScore("score" + teamNumber, val);
+    };
+
+    btnMinus.onclick = () => {
+        const val = parseInt(input.value);
+        if (!isNaN(val)) updateScore("score" + teamNumber, -val);
+    };
+}
+
+function setupTeamNameEditing(teamNumber) {
+    const nameEl = document.getElementById("teamName" + teamNumber);
+
+    nameEl.addEventListener("click", () => {
+        const current = nameEl.textContent;
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = current;
+        input.className = "team-name-input";
+
+        nameEl.replaceWith(input);
+        input.focus();
+
+        input.addEventListener("blur", () => {
+            const newName = input.value.trim() || current;
+            nameEl.textContent = newName;
+            input.replaceWith(nameEl);
+        });
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") input.blur();
+        });
+    });
+}
+
+document.getElementById("modeBtn").onclick = () => {
+    doubleMode = !doubleMode;
+    pointValues = doubleMode ? [...doubleValues] : [...normalValues];
+    document.getElementById("modeBtn").textContent =
+        doubleMode ? "Switch to Regular Jeopardy" : "Switch to Double Jeopardy";
+
+    for (let i = 1; i <= NUM_TEAMS; i++) {
+        buildButtons(i);
+    }
+};
+
+createTeams();
+
